@@ -1,0 +1,14 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+   <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1.0, user-scalable=no" />
+<link rel="stylesheet" type="text/css" href="css/index.css">
+<title>uexClassList</title>
+<script type="text/javascript">
+    function start1(){       var param = {			x:100,			y:200,			w:600,			h:200			};        uexProgressView.open(JSON.stringify(param));        var jsonStr= {        	type:1      	  };        uexProgressView.setViewStyle(JSON.stringify(jsonStr));       	var parogressStr = {       		progress:30       	  };	   	uexProgressView.setProgress(JSON.stringify(parogressStr));     }         function start2(){   		 var param = {			x:100,			y:300,			w:600,			h:200			};        uexProgressView.open(JSON.stringify(param));        var jsonStr= {        	type:2      	  };        uexProgressView.setViewStyle(JSON.stringify(jsonStr));       	var parogressStr = {       		progress:70       	  };	   	uexProgressView.setProgress(JSON.stringify(parogressStr));     }         function start3(){        var param = {			x:100,			y:200,			w:500,			h:500			};        uexProgressView.open(JSON.stringify(param));        var jsonStr= {        	type:3      	  };        uexProgressView.setViewStyle(JSON.stringify(jsonStr));       	var parogressStr = {       		progress:40       	  };	   	uexProgressView.setProgress(JSON.stringify(parogressStr));     }         function start4(){         var param = {			x:100,			y:200,			w:500,			h:500			};        uexProgressView.open(JSON.stringify(param));        var jsonStr= {        	type:4      	  };        uexProgressView.setViewStyle(JSON.stringify(jsonStr));       	var parogressStr = {       		progress:70       	  };	   	uexProgressView.setProgress(JSON.stringify(parogressStr));     }          function end() {     	uexProgressView.close();     }     	window.uexOnload = function(){        uexWidgetOne.cbError = function(opid,type,error){            alert(error);        }              uexProgressView.onComplete = function(){        	alert("sss");        }	}
+</script>
+</head>
+<body>	<div class="tit">uexProgressView</div>	<div class="conbor">				<input type="button" value="类型一" onclick="start1();">				<input type="button" value="类型二" onclick="start2();">				<input type="button" value="类型三" onclick="start3();">				<input type="button" value="类型四" onclick="start4();">				<input type="button" value="关闭" onclick="end();">
+		</div></body>
+</html>
