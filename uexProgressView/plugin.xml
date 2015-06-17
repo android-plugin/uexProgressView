@@ -5,7 +5,6 @@
         uexName="uexProgressView" >
         <method name="open" />
         <method name="setProgress" />
-        <method name="setViewStyle" />
         <method name="close" />
     </plugin>
 </uexplugins>

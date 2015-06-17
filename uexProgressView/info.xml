@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <uexplugins>
-    <plugin uexName="uexProgressView" version="3.0.1" build="1">
-		<info>1:修改线型进度条的进度在右边显示</info>
-		<build>0:进度条</build>
+    <plugin uexName="uexProgressView" version="3.0.0" build="0">
+		<build>0:进度条插件</build>
     </plugin>
 </uexplugins>

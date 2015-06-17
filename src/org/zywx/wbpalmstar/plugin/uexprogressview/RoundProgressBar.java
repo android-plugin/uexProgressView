@@ -85,10 +85,6 @@ public class RoundProgressBar extends View {
 		
 		paint = new Paint();
 
-//		
-//		TypedArray mTypedArray = context.obtainStyledAttributes(attrs,
-//				R.styleable.RoundProgressBar);
-//		
 		//获取自定义属性和默认值
 		roundColor = Color.rgb(66, 145, 241);
 		roundProgressColor = Color.rgb(66, 145, 241);
@@ -109,7 +105,11 @@ public class RoundProgressBar extends View {
 		this.style = style;
 	}
 
-	@Override
+    public void setTextIsDisplayable(boolean textIsDisplayable) {
+        this.textIsDisplayable = textIsDisplayable;
+    }
+
+    @Override
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
 		
@@ -133,21 +133,7 @@ public class RoundProgressBar extends View {
 		paint.setStyle(Paint.Style.FILL);
 		paint.setAntiAlias(true);  //消除锯齿 
 		canvas.drawCircle(centre, centre, radius2, paint); //画出圆环
-		/**
-		 * 画进度百分比
-		 */
-		paint.setStrokeWidth(0); 
-		paint.setColor(textColor);
-		paint.setTextSize(textSize);
-		paint.setTypeface(Typeface.DEFAULT_BOLD); //设置字体
-		int percent = (int)(((float)progress / (float)max) * 100);  //中间的进度百分比，先转换成float在进行除法运算，不然都为0
-		float textWidth = paint.measureText(percent + "%");   //测量字体宽度，我们需要根据字体的宽度设置在圆环中间
-		
-		if(textIsDisplayable && percent != 0 && style == STROKE){
-			canvas.drawText(percent + "%", centre - textWidth / 2, centre + textSize/2, paint); //画出进度百分比
-		}
-		
-		
+
 		/**
 		 * 画圆弧 ，画圆环的进度
 		 */
@@ -173,10 +159,24 @@ public class RoundProgressBar extends View {
 			break;
 		}
 		}
-		
+
+        /**
+         * 画进度百分比
+         */
+        paint.setStrokeWidth(0);
+        paint.setColor(textColor);
+        paint.setTextSize(textSize);
+        paint.setTypeface(Typeface.DEFAULT_BOLD); //设置字体
+        int percent = (int)(((float)progress / (float)max) * 100);  //中间的进度百分比，先转换成float在进行除法运算，不然都为0
+        float textWidth = paint.measureText(percent + "%");   //测量字体宽度，我们需要根据字体的宽度设置在圆环中间
+        if(textIsDisplayable){
+            canvas.drawText(percent + "%", centre - textWidth / 2, centre + textSize/2, paint); //画出进度百分比
+        }
 	}
 	
-	
+
+
+
 	public synchronized int getMax() {
 		return max;
 	}

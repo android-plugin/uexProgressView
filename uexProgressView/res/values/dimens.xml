@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--plugin_uexprogress-->
+    <dimen name="plugin_uexprogress_padding_horizontal">20dp</dimen>
+    <dimen name="plugin_uexprogress_corner_padding">2dp</dimen>
+    <dimen name="plugin_uexprogress_corner_radius">2dp</dimen>
+</resources>
