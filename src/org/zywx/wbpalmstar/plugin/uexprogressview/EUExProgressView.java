@@ -1,13 +1,5 @@
 package org.zywx.wbpalmstar.plugin.uexprogressview;
 
-import java.io.Serializable;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.zywx.wbpalmstar.engine.EBrowserView;
-import org.zywx.wbpalmstar.engine.universalex.EUExBase;
-
-import android.app.Activity;
 import android.app.ActivityGroup;
 import android.app.LocalActivityManager;
 import android.content.Context;
@@ -16,157 +8,276 @@ import android.os.Bundle;
 import android.os.Message;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
-@SuppressWarnings({ "deprecation", "serial" })
-public class EUExProgressView extends EUExBase implements Serializable {
-	
-	public static final String SCRIPT_HEADER = "javascript:";
-	public static final String CALLBACK_ONCOMPLETE = "uexProgressView.onComplete";
-	private LocalActivityManager mgr;
-	private String activityId;
-	
-	public EUExProgressView(Context context, EBrowserView inParent) {
-		super(context, inParent);
-		mgr = ((ActivityGroup)mContext).getLocalActivityManager();
-		activityId = EProgressViewUtils.PROGRESS_PARAMS_KEY_ACTIVITYID + this.hashCode();
-	}
-	
-	public void open(String[] params) {
-		sendMessageInProgress(EProgressViewUtils.PROGRESS_MSG_CODE_OPEN, params);
-	}
+import com.google.gson.reflect.TypeToken;
 
-	public void setProgress(final String[] params) {
-		sendMessageInProgress(EProgressViewUtils.PROGRESS_MSG_CODE_SETPROGRESS, params);
-	}
-	
-	public void setViewStyle(final String[] params) {
-		sendMessageInProgress(EProgressViewUtils.PROGRESS_MSG_CODE_SETVIEWSTYLE, params);
-	}
-	
-	public void close(String[] params) {
-		sendMessageInProgress(EProgressViewUtils.PROGRESS_MSG_CODE_CLOSE, params);
-	}
-	
-	private void sendMessageInProgress(int msgType, String[] params) {
-		if(mHandler == null) {
-			return;
-		}
-		Message msg = Message.obtain();
-		msg.what = msgType;
-		msg.obj = this;
-		Bundle b = new Bundle();
-		b.putStringArray(EProgressViewUtils.PROGRESS_PARAMS_KEY_FUNCTION, params);
-		msg.setData(b);
-		mHandler.sendMessage(msg);
-	}
-	
-	@Override
-	public void onHandleMessage(Message msg) {
-		if(msg.what == EProgressViewUtils.PROGRESS_MSG_CODE_OPEN) {
-			handleOpen(msg);
-		}else {
-			handleInProgress(msg);
-		}
-	}
+import org.json.JSONObject;
+import org.zywx.wbpalmstar.engine.DataHelper;
+import org.zywx.wbpalmstar.engine.EBrowserView;
+import org.zywx.wbpalmstar.engine.universalex.EUExBase;
+import org.zywx.wbpalmstar.plugin.uexprogressview.VO.ProgressDataVO;
 
-	private void handleInProgress(Message msg) {
-		Activity activity = mgr.getActivity(activityId);
-		if (activity != null && activity instanceof EProgressViewActivity) {
-			EProgressViewActivity eProgressViewActivity = ((EProgressViewActivity) activity);
-			String[] params = msg.getData().getStringArray(EProgressViewUtils.PROGRESS_PARAMS_KEY_FUNCTION);
-			switch (msg.what) {
-			case EProgressViewUtils.PROGRESS_MSG_CODE_SETPROGRESS:
-				handleSetProgress(params, eProgressViewActivity);
-				break;
-			case EProgressViewUtils.PROGRESS_MSG_CODE_SETVIEWSTYLE:
-				handleSetViewStyle(params, eProgressViewActivity);
-				break;
-			case EProgressViewUtils.PROGRESS_MSG_CODE_CLOSE:
-				handleClose(params, eProgressViewActivity);
-				break;
-			}
-		}
-	}
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
-	private void handleClose(String[] params, EProgressViewActivity eProgressViewActivity) {
-		View decorView = eProgressViewActivity.getWindow().getDecorView();
-		removeViewFromCurrentWindow(decorView);
-		mgr.destroyActivity(activityId, true);
-	}
+public class EUExProgressView extends EUExBase {
 
-	private void handleSetViewStyle(String[] params, EProgressViewActivity eProgressViewActivity) {
-		Object[] objectArray = ProgressStyle.getProgressStyle(params[0]);
-		eProgressViewActivity.setViewStyle(objectArray);
-	}
+    private static final String BUNDLE_DATA = "data";
+    private static final int MSG_OPEN = 1;
+    private static final int MSG_SET_PROGRESS = 2;
+    private static final int MSG_SET_VIEW_STYLE = 3;
+    private static final int MSG_CLOSE = 4;
+    private LocalActivityManager mgr;
+    private String activityId;
+    private List<ProgressDataVO> mIDs;
 
-	private void handleSetProgress(String[] params, EProgressViewActivity eProgressViewActivity) {
-		String jsonStr = params[0];
-		try {
-			JSONObject jsonObj = new JSONObject(jsonStr);
-			String progress = jsonObj.optString("progress");
-			eProgressViewActivity.setProgressStr(progress);
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-	}
 
-	private void handleOpen(Message msg) {
-		String[] params = msg.getData().getStringArray(EProgressViewUtils.PROGRESS_PARAMS_KEY_FUNCTION);
-		if(params == null || params.length != 1) {
-			return;
-		}
-		try {
-			JSONObject json = new JSONObject(params[0]);
-			float x = Float.parseFloat(json.getString(EProgressViewUtils.PROGRESS_PARAMS_KEY_X));
-			float y = Float.parseFloat(json.getString(EProgressViewUtils.PROGRESS_PARAMS_KEY_Y));
-			float w = Float.parseFloat(json.getString(EProgressViewUtils.PROGRESS_PARAMS_KEY_W));
-			float h = Float.parseFloat(json.getString(EProgressViewUtils.PROGRESS_PARAMS_KEY_H));
-			Intent intent = new Intent(mContext, EProgressViewActivity.class);
-			EProgressViewActivity eProgressViewActivity = (EProgressViewActivity) mgr.getActivity(activityId);
-			if (eProgressViewActivity != null) {
-				View view = eProgressViewActivity.getWindow().getDecorView();
-				removeViewFromCurrentWindow(view);
-				mgr.destroyActivity(activityId, true);
-				view = null;
-			}
-			intent.putExtra(EProgressViewUtils.PROGRESS_PARAMS_KEY_OBJ, this);
-			Window window = mgr.startActivity(activityId, intent);
-			View decorView = window.getDecorView();
-			RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams((int) w, (int) h);
-			lp.topMargin = (int) y;
-			lp.leftMargin = (int) x;
-			addView2CurrentWindow(decorView, lp);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private void addView2CurrentWindow(View child,
-			RelativeLayout.LayoutParams parms) {
-		int l = (int) (parms.leftMargin);
-		int t = (int) (parms.topMargin);
-		int w = parms.width;
-		int h = parms.height;
-		FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
-		lp.gravity = Gravity.NO_GRAVITY;
-		lp.leftMargin = l;
-		lp.topMargin = t;
-		adptLayoutParams(parms, lp);
-		mBrwView.addViewToCurrentWindow(child, lp);
-	}
-	
-	public void callBack() {
-		String js = SCRIPT_HEADER + "if(" + CALLBACK_ONCOMPLETE + "){" +CALLBACK_ONCOMPLETE + "()}";
-		onCallback(js);
-	}
-	
-	@Override
-	protected boolean clean() {
-		close(null);
-		return false;
-	}
+    public EUExProgressView(Context context, EBrowserView eBrowserView) {
+        super(context, eBrowserView);
+        mgr = ((ActivityGroup)mContext).getLocalActivityManager();
+        activityId = EProgressViewUtils.PROGRESS_PARAMS_KEY_ACTIVITYID + this.hashCode();
+        mIDs = new ArrayList<ProgressDataVO>();
+    }
 
+    @Override
+    protected boolean clean() {
+        return false;
+    }
+
+
+    public void open(String[] params) {
+        if (params == null || params.length < 1) {
+            errorCallback(0, 0, "error params!");
+            return;
+        }
+        Message msg = new Message();
+        msg.obj = this;
+        msg.what = MSG_OPEN;
+        Bundle bd = new Bundle();
+        bd.putStringArray(BUNDLE_DATA, params);
+        msg.setData(bd);
+        mHandler.sendMessage(msg);
+    }
+
+    private void openMsg(String[] params) {
+        String json = params[0];
+        ProgressDataVO dataVO = DataHelper.gson.fromJson(json, ProgressDataVO.class);
+        String id = getTagID(dataVO.getId());
+        if (isAlreadyAdded(id)){
+            return;
+        }
+        Intent intent = new Intent(mContext, EProgressViewActivity.class);
+        intent.putExtra(JsConst.PARAMS_PROGRESS_DATA, dataVO);
+        intent.putExtra(JsConst.PARAMS_CALLBACK_LISTENER, listener);
+        Window window = mgr.startActivity(id, intent);
+        View decorView = window.getDecorView();
+        if (dataVO.isScrollWithWeb()){
+            android.widget.AbsoluteLayout.LayoutParams lp = new
+                    android.widget.AbsoluteLayout.LayoutParams(
+                    dataVO.getWidth(),
+                    dataVO.getHeight(),
+                    dataVO.getLeft(),
+                    dataVO.getTop());
+            addViewToWebView(decorView, lp, id);
+        }else{
+            RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(
+                    dataVO.getWidth(), dataVO.getHeight());
+            lp.leftMargin = dataVO.getLeft();
+            lp.topMargin = dataVO.getTop();
+            addView2CurrentWindow(decorView, lp);
+        }
+        mIDs.add(dataVO);
+    }
+
+    private void addView2CurrentWindow(View child,
+                                       RelativeLayout.LayoutParams parms) {
+        int l = parms.leftMargin;
+        int t = parms.topMargin;
+        int w = parms.width;
+        int h = parms.height;
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
+        lp.gravity = Gravity.NO_GRAVITY;
+        lp.leftMargin = l;
+        lp.topMargin = t;
+        adptLayoutParams(parms, lp);
+        mBrwView.addViewToCurrentWindow(child, lp);
+    }
+
+    public void setProgress(String[] params) {
+        if (params == null || params.length < 1) {
+            errorCallback(0, 0, "error params!");
+            return;
+        }
+        Message msg = new Message();
+        msg.obj = this;
+        msg.what = MSG_SET_PROGRESS;
+        Bundle bd = new Bundle();
+        bd.putStringArray(BUNDLE_DATA, params);
+        msg.setData(bd);
+        mHandler.sendMessage(msg);
+    }
+
+    private void setProgressMsg(String[] params) {
+        String json = params[0];
+        ProgressDataVO dataVO = DataHelper.gson.fromJson(json, ProgressDataVO.class);
+        String tag = getTagID(dataVO.getId());
+        if (isAlreadyAdded(tag)){
+            EProgressViewActivity activity = (EProgressViewActivity) mgr.getActivity(tag);
+            activity.setProgressStr((int) dataVO.getProgress());
+        }
+    }
+
+    public void setViewStyle(String[] params) {
+        if (params == null || params.length < 1) {
+            errorCallback(0, 0, "error params!");
+            return;
+        }
+        Message msg = new Message();
+        msg.obj = this;
+        msg.what = MSG_SET_VIEW_STYLE;
+        Bundle bd = new Bundle();
+        bd.putStringArray(BUNDLE_DATA, params);
+        msg.setData(bd);
+        mHandler.sendMessage(msg);
+    }
+
+    private void setViewStyleMsg(String[] params) {
+        String json = params[0];
+    }
+
+    public void close(String[] params) {
+        Message msg = new Message();
+        msg.obj = this;
+        msg.what = MSG_CLOSE;
+        Bundle bd = new Bundle();
+        bd.putStringArray(BUNDLE_DATA, params);
+        msg.setData(bd);
+        mHandler.sendMessage(msg);
+    }
+
+    private void closeMsg(String[] params) {
+        List<String> list = new ArrayList<String>();
+        List<String> tempList = new ArrayList<String>();
+        if (params != null && params.length > 0){
+            String json = params[0];
+            tempList = DataHelper.gson.fromJson(json, new TypeToken<List<String>>(){}.getType());
+        }
+        if (tempList == null || tempList.size() < 1){
+            for (int i = 0; i < mIDs.size(); i++){
+                list.add(mIDs.get(i).getId());
+            }
+        }else{
+            for (int j = 0; j < tempList.size(); j++){
+                final String id = tempList.get(j);
+                list.add(id);
+            }
+        }
+        for (int i = 0; i < list.size(); i++){
+            final String item = list.get(i);
+            ProgressDataVO chartVO = getProgressFromIDs(item);
+            if (chartVO != null){
+                String id = getTagID(chartVO.getId());
+                if (isAlreadyAdded(id)){
+                    if (chartVO.isScrollWithWeb()){
+                        removeViewFromWebView(id);
+                    }else{
+                        removeProgressView(id);
+                    }
+                    mgr.destroyActivity(id, true);
+                    removeIdFormIDs(item);
+                }
+            }
+        }
+    }
+
+    private void removeIdFormIDs(String id){
+        Iterator<ProgressDataVO> iterator = mIDs.iterator();
+        while (iterator.hasNext()){
+            ProgressDataVO item = iterator.next();
+            if (id.equals(item.getId())){
+                iterator.remove();
+            }
+        }
+    }
+
+    private void removeProgressView(String id){
+        View view = mgr.getActivity(id).getWindow().getDecorView();
+        if (view.getParent() != null) {
+            ((ViewGroup)view.getParent()).removeView(view);
+        }
+    }
+
+    private ProgressDataVO getProgressFromIDs(String id){
+        ProgressDataVO progressVO = null;
+        Iterator<ProgressDataVO> iterator = mIDs.iterator();
+        while (iterator.hasNext()){
+            ProgressDataVO item = iterator.next();
+            if (id.equals(item.getId())){
+                progressVO = item;
+            }
+        }
+        return progressVO;
+    }
+
+    @Override
+    public void onHandleMessage(Message message) {
+        if(message == null){
+            return;
+        }
+        Bundle bundle=message.getData();
+        switch (message.what) {
+
+            case MSG_OPEN:
+                openMsg(bundle.getStringArray(BUNDLE_DATA));
+                break;
+            case MSG_SET_PROGRESS:
+                setProgressMsg(bundle.getStringArray(BUNDLE_DATA));
+                break;
+            case MSG_SET_VIEW_STYLE:
+                setViewStyleMsg(bundle.getStringArray(BUNDLE_DATA));
+                break;
+            case MSG_CLOSE:
+                closeMsg(bundle.getStringArray(BUNDLE_DATA));
+                break;
+            default:
+                super.onHandleMessage(message);
+        }
+    }
+
+    private void callBackPluginJs(String methodName, String jsonData){
+        String js = SCRIPT_HEADER + "if(" + methodName + "){"
+                + methodName + "('" + jsonData + "');}";
+        onCallback(js);
+    }
+
+    private String getTagID(String id){
+        return EProgressViewActivity.TAG + id;
+    }
+
+    private boolean isAlreadyAdded(String tagID) {
+        return mgr.getActivity(tagID) != null;
+    }
+
+    OnProgressComplete listener = new OnProgressComplete() {
+        @Override
+        public void onComplete(String id) {
+            JSONObject jsonObject = new JSONObject();
+            try {
+                jsonObject.put(JsConst.RESULT_ID, id);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            callBackPluginJs(JsConst.ON_COMPLETE, jsonObject.toString());
+        }
+    };
+
+    public interface OnProgressComplete extends Serializable{
+        public void onComplete(String id);
+    }
 }

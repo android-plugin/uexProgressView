@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <uexplugins>
-	<plugin
+    <plugin
         className="org.zywx.wbpalmstar.plugin.uexprogressview.EUExProgressView"
         uexName="uexProgressView" >
         <method name="open" />
         <method name="setProgress" />
-        <method name="setViewStyle" />
         <method name="close" />
     </plugin>
 </uexplugins>

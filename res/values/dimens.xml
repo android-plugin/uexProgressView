@@ -9,4 +9,8 @@
     <dimen name="slidingmenu_width">240dp</dimen>
     <dimen name="shadow_width">15dp</dimen>
 
+    <!--plugin_uexprogress-->
+    <dimen name="plugin_uexprogress_padding_horizontal">20dp</dimen>
+    <dimen name="plugin_uexprogress_corner_padding">2dp</dimen>
+    <dimen name="plugin_uexprogress_corner_radius">2dp</dimen>
 </resources>

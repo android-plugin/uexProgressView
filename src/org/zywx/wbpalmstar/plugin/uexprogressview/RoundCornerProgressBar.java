@@ -1,7 +1,5 @@
 package org.zywx.wbpalmstar.plugin.uexprogressview;
 
-import org.zywx.wbpalmstar.engine.universalex.EUExUtil;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
@@ -9,18 +7,24 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnPreDrawListener;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import org.zywx.wbpalmstar.engine.universalex.EUExUtil;
+import org.zywx.wbpalmstar.plugin.uexprogressview.VO.ProgressDataVO;
 
 public class RoundCornerProgressBar extends LinearLayout {
 	private final static int DEFAULT_PROGRESS_BAR_HEIGHT = 30;
 
-	private LinearLayout layoutBackground;
+	private FrameLayout layoutBackground;
 	private LinearLayout layoutProgress;
 	private LinearLayout linearlayoutparent;
 	private int backgroundWidth = 0;
@@ -36,8 +40,9 @@ public class RoundCornerProgressBar extends LinearLayout {
 	private float progress = 0;
 	private int radius = 10;
 	private int padding = 1;
-	private int progressColor = Color.rgb(66,145,241);
-	private int backgroundColor = Color.rgb(66,145,241);
+	private int progressColor = Color.RED;
+	private int backgroundColor = Color.GREEN;
+    private TextView mPercent;
 
 	@SuppressLint("NewApi")
 	public RoundCornerProgressBar(Context context, AttributeSet attrs) {
@@ -53,7 +58,7 @@ public class RoundCornerProgressBar extends LinearLayout {
 			setup(context, attrs);
 			isProgressBarCreated = true;
 		} else {
-			setBackgroundColor(Color.rgb(66,145,241));
+			setBackgroundColor(Color.TRANSPARENT);
 			setGravity(Gravity.CENTER);
 
 			TextView tv = new TextView(context);
@@ -67,8 +72,9 @@ public class RoundCornerProgressBar extends LinearLayout {
 		int color;
 		DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
 		radius = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, radius, metrics);
-		layoutBackground = (LinearLayout) findViewById(EUExUtil.getResIdID("round_corner_progress_background"));
+		layoutBackground = (FrameLayout) findViewById(EUExUtil.getResIdID("round_corner_progress_background"));
 		linearlayoutparent = (LinearLayout) findViewById(EUExUtil.getResIdID("linearlayoutparent"));
+        mPercent = (TextView) findViewById(EUExUtil.getResIdID("plugin_uexprogress_percent"));
 		padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, padding, metrics);
 		layoutBackground.setPadding(padding, padding, padding, padding);
 		linearlayoutparent.setPadding(padding, padding, padding, padding);
@@ -78,26 +84,26 @@ public class RoundCornerProgressBar extends LinearLayout {
 		}
 		ViewTreeObserver observer = layoutBackground.getViewTreeObserver();
 		observer.addOnPreDrawListener(new OnPreDrawListener() {
-			
-			@Override
-			public boolean onPreDraw() {
-				layoutBackground.getViewTreeObserver().removeOnPreDrawListener(this);
-				int height = 0;
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-					backgroundWidth = layoutBackground.getMeasuredWidth();
-					height = layoutBackground.getMeasuredHeight();
-				} else {
-					backgroundWidth = layoutBackground.getWidth();
-					height = layoutBackground.getHeight();
-				}
-				backgroundHeight = (height == 0) ? (int) dp2px(DEFAULT_PROGRESS_BAR_HEIGHT) : height;
-				LayoutParams params = (LayoutParams) layoutBackground.getLayoutParams();
-				params.height = backgroundHeight;
-				layoutBackground.setLayoutParams(params);
-				setProgress(progress);
-				return false;
-			}
-		});
+
+            @Override
+            public boolean onPreDraw() {
+                layoutBackground.getViewTreeObserver().removeOnPreDrawListener(this);
+                int height = 0;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                    backgroundWidth = layoutBackground.getMeasuredWidth();
+                    height = layoutBackground.getMeasuredHeight();
+                } else {
+                    backgroundWidth = layoutBackground.getWidth();
+                    height = layoutBackground.getHeight();
+                }
+                backgroundHeight = (height == 0) ? (int) dp2px(DEFAULT_PROGRESS_BAR_HEIGHT) : height;
+                LayoutParams params = (LayoutParams) layoutBackground.getLayoutParams();
+                params.height = backgroundHeight;
+                layoutBackground.setLayoutParams(params);
+                setProgress(progress);
+                return false;
+            }
+        });
 		layoutProgress = (LinearLayout) findViewById(EUExUtil.getResIdID("round_corner_progress_progress"));
 		if (!isProgressColorSetBeforeDraw) {
 			color = progressColor;
@@ -112,7 +118,8 @@ public class RoundCornerProgressBar extends LinearLayout {
 	
 	@SuppressWarnings("deprecation")
 	public void setRoundLinearlayoutColor(int color) {
-		int radius = this.radius - padding / 2;
+        Log.i("djf", "setRoundLinearlayoutColor:color=" + color);
+        int radius = this.radius - padding / 2;
 		GradientDrawable gradient = new GradientDrawable();
 		gradient.setShape(GradientDrawable.RECTANGLE);
 		gradient.setColor(color);
@@ -123,12 +130,13 @@ public class RoundCornerProgressBar extends LinearLayout {
 	@SuppressWarnings("deprecation")
 	@SuppressLint("NewApi")
 	public void setProgressColor(int color) {
+        Log.i("djf", "setProgressColor:color=" + color);
 		progressColor = color;
 		int radius = this.radius - padding / 2;
 		GradientDrawable gradient = new GradientDrawable();
 		gradient.setShape(GradientDrawable.RECTANGLE);
 		gradient.setColor(progressColor);
-		gradient.setCornerRadii(new float[] { radius, radius, radius, radius, radius, radius, radius, radius });
+		gradient.setCornerRadii(new float[]{radius, radius, radius, radius, radius, radius, radius, radius});
 		layoutProgress.setBackgroundDrawable(gradient);
 		if (!isProgressBarCreated) {
 			isProgressColorSetBeforeDraw = true;
@@ -138,6 +146,7 @@ public class RoundCornerProgressBar extends LinearLayout {
 	@SuppressWarnings("deprecation")
 	@SuppressLint("NewApi")
 	public void setBackgroundColor(int color) {
+        Log.i("djf", "setBackgroundColor:color=" + color);
 		backgroundColor = color;
 		GradientDrawable gradient = new GradientDrawable();
 		gradient.setShape(GradientDrawable.RECTANGLE);
@@ -172,6 +181,12 @@ public class RoundCornerProgressBar extends LinearLayout {
 		}
 	}
 
+    public void setProgressStr(){
+        if (mPercent != null){
+            mPercent.setText((int) progress + "%");
+        }
+    }
+
 	public float getMax() {
 		return max;
 	}
@@ -192,4 +207,14 @@ public class RoundCornerProgressBar extends LinearLayout {
 		DisplayMetrics displayMetrics = getContext().getResources().getDisplayMetrics();
 		return Math.round(dp * (displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT));
 	}
+
+    public void setPercentTextStyle(ProgressDataVO data){
+        if (data.isShowText()){
+            mPercent.setVisibility(View.VISIBLE);
+            mPercent.setTextSize(TypedValue.COMPLEX_UNIT_SP, data.getTextSize());
+            mPercent.setTextColor(data.getTextColor());
+        }else{
+            mPercent.setVisibility(View.GONE);
+        }
+    }
 }

@@ -1,7 +1,5 @@
 package org.zywx.wbpalmstar.plugin.uexprogressview;
 
-import org.zywx.wbpalmstar.engine.universalex.EUExUtil;
-
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -10,7 +8,10 @@ import android.graphics.RectF;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.View;
+
+import org.zywx.wbpalmstar.engine.universalex.EUExUtil;
 
 /**
  * Created by daimajia on 14-4-30.
@@ -251,9 +252,8 @@ public class NumberProgressBar extends View {
         if(mDrawUnreachedBar) {
             canvas.drawRect(mUnreachedRectF, mUnreachedBarPaint);
         }
-
         if(mIfDrawText)
-            canvas.drawText(mCurrentDrawText,mDrawTextStart,mDrawTextEnd,mTextPaint);
+            canvas.drawText(mCurrentDrawText,mDrawTextStart,mDrawTextEnd, mTextPaint);
     }
 
     private void initializePainters(){
@@ -264,10 +264,15 @@ public class NumberProgressBar extends View {
         mUnreachedBarPaint.setColor(mUnreachedBarColor);
 
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        setPaintTextSize(mTextSize);
         mTextPaint.setColor(mTextColor);
-        mTextPaint.setTextSize(mTextSize);
     }
 
+    private void setPaintTextSize(float textSize){
+        textSize = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_SP, textSize, this.getResources().getDisplayMetrics());
+        mTextPaint.setTextSize(textSize);
+    }
 
     private void calculateDrawRectFWithoutProgressText(){
         mReachedRectF.left = getPaddingLeft();
@@ -358,7 +363,7 @@ public class NumberProgressBar extends View {
 
     public void setProgressTextSize(float TextSize) {
         this.mTextSize = TextSize;
-        mTextPaint.setTextSize(mTextSize);
+        setPaintTextSize(TextSize);
         invalidate();
     }
 
@@ -370,7 +375,7 @@ public class NumberProgressBar extends View {
 
     public void setUnreachedBarColor(int BarColor) {
         this.mUnreachedBarColor = BarColor;
-        mUnreachedBarPaint.setColor(mReachedBarColor);
+        mUnreachedBarPaint.setColor(mUnreachedBarColor);
         invalidate();
     }
 
