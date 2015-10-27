@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <uexplugins>
-    <plugin uexName="uexProgressView" version="3.0.0" build="0">
+    <plugin uexName="uexProgressView" version="3.0.1" build="1">
+        <info>1:去掉插件中的ActivityGroup,配合引擎升级</info>
 		<build>0:进度条插件</build>
     </plugin>
 </uexplugins>

@@ -1,7 +1,5 @@
 package org.zywx.wbpalmstar.plugin.uexprogressview;
 
-import android.app.ActivityGroup;
-import android.app.LocalActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -23,6 +21,7 @@ import org.zywx.wbpalmstar.plugin.uexprogressview.VO.ProgressDataVO;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -33,16 +32,16 @@ public class EUExProgressView extends EUExBase {
     private static final int MSG_SET_PROGRESS = 2;
     private static final int MSG_SET_VIEW_STYLE = 3;
     private static final int MSG_CLOSE = 4;
-    private LocalActivityManager mgr;
     private String activityId;
     private List<ProgressDataVO> mIDs;
+    private HashMap<String, EProgressView> progressViews;
 
 
     public EUExProgressView(Context context, EBrowserView eBrowserView) {
         super(context, eBrowserView);
-        mgr = ((ActivityGroup)mContext).getLocalActivityManager();
         activityId = EProgressViewUtils.PROGRESS_PARAMS_KEY_ACTIVITYID + this.hashCode();
         mIDs = new ArrayList<ProgressDataVO>();
+        progressViews = new HashMap<String, EProgressView>();
     }
 
     @Override
@@ -72,11 +71,7 @@ public class EUExProgressView extends EUExBase {
         if (isAlreadyAdded(id)){
             return;
         }
-        Intent intent = new Intent(mContext, EProgressViewActivity.class);
-        intent.putExtra(JsConst.PARAMS_PROGRESS_DATA, dataVO);
-        intent.putExtra(JsConst.PARAMS_CALLBACK_LISTENER, listener);
-        Window window = mgr.startActivity(id, intent);
-        View decorView = window.getDecorView();
+        EProgressView progressView = new EProgressView(mContext, dataVO, listener);
         if (dataVO.isScrollWithWeb()){
             android.widget.AbsoluteLayout.LayoutParams lp = new
                     android.widget.AbsoluteLayout.LayoutParams(
@@ -84,15 +79,16 @@ public class EUExProgressView extends EUExBase {
                     dataVO.getHeight(),
                     dataVO.getLeft(),
                     dataVO.getTop());
-            addViewToWebView(decorView, lp, id);
+            addViewToWebView(progressView, lp, id);
         }else{
             RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(
                     dataVO.getWidth(), dataVO.getHeight());
             lp.leftMargin = dataVO.getLeft();
             lp.topMargin = dataVO.getTop();
-            addView2CurrentWindow(decorView, lp);
+            addView2CurrentWindow(progressView, lp);
         }
         mIDs.add(dataVO);
+        progressViews.put(id, progressView);
     }
 
     private void addView2CurrentWindow(View child,
@@ -128,7 +124,7 @@ public class EUExProgressView extends EUExBase {
         ProgressDataVO dataVO = DataHelper.gson.fromJson(json, ProgressDataVO.class);
         String tag = getTagID(dataVO.getId());
         if (isAlreadyAdded(tag)){
-            EProgressViewActivity activity = (EProgressViewActivity) mgr.getActivity(tag);
+            EProgressView activity = progressViews.get(tag);
             activity.setProgressStr((int) dataVO.getProgress());
         }
     }
@@ -189,7 +185,6 @@ public class EUExProgressView extends EUExBase {
                     }else{
                         removeProgressView(id);
                     }
-                    mgr.destroyActivity(id, true);
                     removeIdFormIDs(item);
                 }
             }
@@ -204,10 +199,14 @@ public class EUExProgressView extends EUExBase {
                 iterator.remove();
             }
         }
+
+        if (progressViews.containsKey(getTagID(id))){
+            progressViews.remove(getTagID(id));
+        }
     }
 
     private void removeProgressView(String id){
-        View view = mgr.getActivity(id).getWindow().getDecorView();
+        View view = progressViews.get(id);
         if (view.getParent() != null) {
             ((ViewGroup)view.getParent()).removeView(view);
         }
@@ -257,11 +256,14 @@ public class EUExProgressView extends EUExBase {
     }
 
     private String getTagID(String id){
-        return EProgressViewActivity.TAG + id;
+        return EProgressView.TAG + id;
     }
 
     private boolean isAlreadyAdded(String tagID) {
-        return mgr.getActivity(tagID) != null;
+        if (progressViews.containsKey(tagID) && progressViews.get(tagID) != null){
+            return true;
+        }
+        return false;
     }
 
     OnProgressComplete listener = new OnProgressComplete() {
